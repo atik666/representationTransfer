@@ -31,6 +31,8 @@ val/
 
 To get the dataset in the desired style, download from here: 
 
+<a href="https://drive.google.com/file/d/19a_6Krjjv3XCQwiZGqFtTdGb4KHMFl21/view?usp=sharing" target="_blank">mini-imagenet</a>
+
 https://drive.google.com/file/d/19a_6Krjjv3XCQwiZGqFtTdGb4KHMFl21/view?usp=sharing
 
 unzip the file and put the contents in dataset folder.
@@ -64,7 +66,7 @@ To perfrom regular MAML without transfer learning, run:
 python miniimagenet_main.py --transfer='False'
 ```
 
-############################################################
+###################################################################
 
 To appply Omniglot with MAML change directory
 
@@ -79,6 +81,8 @@ cd dataset
 ```
 
 To get the dataset in the desired style, download from here: 
+
+<a href="https://drive.google.com/file/d/1A_A8Huh4os6zzot8GMD5vBSqHc3wX9Fk/view?usp=sharing" target="_blank">Omniglot</a>
 
 https://drive.google.com/file/d/1A_A8Huh4os6zzot8GMD5vBSqHc3wX9Fk/view?usp=sharing
 
