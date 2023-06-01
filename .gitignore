@@ -4,3 +4,10 @@ miniImagenet/saved_models/*
 Omniglot/saved_models/*
 miniImagenet/ckpt/*
 miniImagenet/runs/*
+
+!miniImagenet/dataset/.gitkeep 
+!Omniglot/dataset/.gitkeep 
+!miniImagenet/saved_models/.gitkeep 
+!Omniglot/saved_models/.gitkeep 
+!miniImagenet/ckpt/.gitkeep 
+!miniImagenet/runs/.gitkeep 
