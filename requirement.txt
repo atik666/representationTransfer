@@ -4,5 +4,5 @@ torchvision==0.15.1
 Pillow==9.1.1
 tqdm==4.64.0
 glob
-scipy==1.8.1
 shutil
+math

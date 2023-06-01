@@ -2,3 +2,8 @@ miniImagenet/dataset/*
 Omniglot/dataset/*
 miniImagenet/saved_models/*
 Omniglot/saved_models/*
+
+!miniImagenet/dataset/.gitkeep 
+!Omniglot/dataset/.gitkeep 
+!miniImagenet/saved_models/.gitkeep 
+!Omniglot/saved_models/.gitkeep 
