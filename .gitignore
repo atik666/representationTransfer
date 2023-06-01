@@ -1,0 +1,6 @@
+miniImagenet/dataset/*
+Omniglot/dataset/*
+miniImagenet/saved_models/*
+Omniglot/saved_models/*
+miniImagenet/ckpt/*
+miniImagenet/runs/*
