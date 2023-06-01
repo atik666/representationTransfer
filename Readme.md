@@ -1,6 +1,18 @@
 # Unsupervised Representation Learning to Aid Few-Shot Transfer Learning
 pytorch implementation of MAML
 
+## Environment Preparing
+
+```
+python3
+```
+
+To install necessary requirements and packages, run:
+
+```
+pip install -r requirement.txt
+```
+
 # Data preparation
 
 datasets used: 
