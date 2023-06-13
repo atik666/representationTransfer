@@ -13,7 +13,7 @@ def main():
         )
     
     # Add the parameters
-    parser.add_argument('-p', '--path', type=str, default='/home/atik/Documents/MAML/Summer_1/datasets/Omniglot/', 
+    parser.add_argument('-p', '--path', type=str, default='dataset/', 
                         help='Path to unsupervised training data')
     parser.add_argument('-model', '--model_path', type=str, default='./saved_models/', 
                         help='Path to test images')
@@ -61,6 +61,7 @@ def main():
     
     model_path = args.model_path + 'model_%sw_%ss_%sq.pth' %(args.n_way,args.k_shot,args.k_query)
     
+    # breakpoint()
     db_train = OmniglotNShot(args.path,
                    batchsz=args.batchsz,
                    n_way=args.n_way,
