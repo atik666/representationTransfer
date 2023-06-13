@@ -1,13 +1,25 @@
 # Unsupervised Representation Learning to Aid Few-Shot Transfer Learning
-pytorch implementation of MAML
+Pytorch implementation of Model Agnostic Meta Learning (MAML)
 
 ## Environment Preparing
-
+Make sure you have [conda](https://docs.conda.io/en/latest/miniconda.html) installed on your device
+```bash
+$ conda create -n maml-impl
+$ conda activate maml-impl
 ```
-python3
+Install [Cuda 11.7](
+https://developer.nvidia.com/cuda-11-7-1-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Debian&target_version=11&target_type=runfile_local)
+
+```bash
+$ wget https://developer.download.nvidia.com/compute/cuda/11.7.1/local_installers/cuda_11.7.1_515.65.01_linux.run
+
+$ sudo sh cuda_11.7.1_515.65.01_linux.run
 ```
 
-To install necessary requirements and packages, run:
+Install [pytorch](https://pytorch.org/) based off Cuda 11.7
+
+
+Install remaining packages through pip:
 
 ```
 pip install -r requirement.txt
@@ -15,11 +27,14 @@ pip install -r requirement.txt
 
 # Data preparation
 
-datasets used: 
+Datasets used: 
 
 * mini-imagenet
 * Omniglot
 
+**Refer to notebooks/Datasets Download.ipynb to Download mini-imagenet and omniglot data for project**
+
+# Mini-Imagenet
 To appply mini-imagenet with MAML change directory
 
 ```shell
@@ -41,12 +56,6 @@ unsupervised/
 val/
 ```
 
-To get the dataset in the desired style, download from here: 
-
-<a href="https://drive.google.com/file/d/19a_6Krjjv3XCQwiZGqFtTdGb4KHMFl21/view?usp=sharing" target="_blank">mini-imagenet</a>
-
-unzip the file and put the contents in dataset folder.
-
 To get the unlabeled data in the unsupervised folder, run:
 
 ```python
@@ -58,7 +67,7 @@ To run the unsupervised representation learning model, run:
 ```python
 python miniimagenet_transfer.py
 ```
-The model will be save in saved_models folder.
+*Note: The model will be save in saved_models folder.*
 
 To run the supervised transfer learning model, run:
 
@@ -76,7 +85,7 @@ To perfrom regular MAML without transfer learning, run:
 python miniimagenet_main.py --transfer='False'
 ```
 
-###################################################################
+# Omniglot
 
 To appply Omniglot with MAML change directory
 
@@ -90,16 +99,13 @@ Dowanload Omniglot dataset and put it in dataset folder.
 cd dataset
 ```
 
-To get the dataset in the desired style, download from here: 
-
-<a href="https://drive.google.com/file/d/1A_A8Huh4os6zzot8GMD5vBSqHc3wX9Fk/view?usp=sharing" target="_blank">Omniglot</a>
-
 To run the unsupervised representation learning model, run:
 
 ```python
 python omniglot_transfer.py
 ```
-The model will be save in saved_models folder.
+*Note: The model will be save in saved_models folder.*
+
 
 To run the supervised transfer learning model, run:
 
