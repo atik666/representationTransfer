@@ -9,7 +9,7 @@ class Meta(nn.Module):
     """
     Meta-Learner
     """
-    def __init__(self, config, temp):
+    def __init__(self, config, temp = 1, opt_path=None):
         super(Meta, self).__init__()   
         self.update_lr = 0.1 
         self.meta_lr = 1e-3 
@@ -20,9 +20,14 @@ class Meta(nn.Module):
         self.update_step = 5
         self.update_step_test = 5 
         self.temp = temp
+        self.opt_path = opt_path
         
         self.net = Learner(config) ## base-learner
-        self.meta_optim = torch.optim.Adam(self.net.parameters(), lr = self.meta_lr)        
+        device = torch.device('cuda:0')
+        self.net.to(device)
+        self.meta_optim = torch.optim.Adam(self.net.parameters(), lr = self.meta_lr) 
+        if opt_path != None:
+            self.meta_optim.load_state_dict(torch.load(self.opt_path))
         self.printed = True
 
     def cross_entropy(self,X,y):
@@ -141,6 +146,9 @@ class Meta(nn.Module):
         accs = np.array(corrects) / (querysz * task_num) 
         
         return accs
+    
+    def optimizer(self):
+        return self.meta_optim
         
     
     def finetunning(self, x_support, y_support, x_query, y_query):

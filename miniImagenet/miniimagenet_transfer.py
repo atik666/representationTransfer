@@ -259,13 +259,6 @@ class MiniImagenet(Dataset):
         # as we have built up to batchsz of sets, you can sample some small batch size of sets.
         return self.batchsz
 
-def mean_confidence_interval(accs, confidence=0.95):
-    n = accs.shape[0]
-    m, se = np.mean(accs), scipy.stats.sem(accs)
-    h = se * scipy.stats.t._ppf((1 + confidence) / 2, n - 1)
-    return m, h
-
-
 def main():
     
     # Initialize the parser
@@ -336,6 +329,7 @@ def main():
     # batchsz here means total episode number
 
     model_path = args.model_path + 'model_%sw_%ss_%sq.pth' %(args.n_way,args.k_shot,args.k_query)
+    opt_path = args.model_path + 'opt_%sw_%ss_%sq.pth' %(args.n_way,args.k_shot,args.k_query)
     
     mini_train = MiniImagenet(args.train_path, mode='train', n_way=args.n_way, k_shot=args.k_shot,
                         k_query=args.k_query,
@@ -377,6 +371,8 @@ def main():
                 if  max(accuracies) == accs[-1]:
                     print('\n','Saving best model...')
                     torch.save(maml.state_dict(), model_path)
+                    optimizer = maml.optimizer()
+                    torch.save(optimizer.state_dict(), opt_path)
         
         print("\n", "Best test accuracy: ", max(accuracies))
 
