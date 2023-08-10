@@ -8,7 +8,6 @@ import random
 from os import walk
 import glob
 from meta import Meta
-import  scipy.stats
 from    torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
@@ -273,7 +272,7 @@ def main():
                         help='Path to test images')
     parser.add_argument('-model', '--model_path', type=str, default='./saved_models/', 
                         help='Path to test images')
-    parser.add_argument('-n', '--n_way', type=int, default=5, help='Number of ways')
+    parser.add_argument('-n', '--n_way', type=int, default=20, help='Number of ways')
     parser.add_argument('-s', '--k_shot', type=int, default=1, help='Number of support set')
     parser.add_argument('-q', '--k_query', type=int, default=1, help='Number of query set')
     parser.add_argument('-e', '--epochs', type=int, default=20, help='Number of  epochs')
@@ -315,9 +314,9 @@ def main():
 
     device = torch.device('cuda:0')
     if args.n_way == 5:
-        args.temp = 10
-    elif args.n_way == 20:
         args.temp = 100
+    elif args.n_way == 20:
+        args.temp = 10
         
     maml = Meta(config, args.temp).to(device)
 
