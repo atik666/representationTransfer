@@ -272,7 +272,7 @@ def main():
                         help='Path to test images')
     parser.add_argument('-model', '--model_path', type=str, default='./saved_models/', 
                         help='Path to test images')
-    parser.add_argument('-n', '--n_way', type=int, default=20, help='Number of ways')
+    parser.add_argument('-n', '--n_way', type=int, default=5, help='Number of ways')
     parser.add_argument('-s', '--k_shot', type=int, default=1, help='Number of support set')
     parser.add_argument('-q', '--k_query', type=int, default=1, help='Number of query set')
     parser.add_argument('-e', '--epochs', type=int, default=20, help='Number of  epochs')

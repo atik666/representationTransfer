@@ -13,10 +13,6 @@ class Meta(nn.Module):
         super(Meta, self).__init__()   
         self.update_lr = 0.1 
         self.meta_lr = 1e-3 
-        self.n_way = 5 
-        self.k_shot = 5 
-        self.k_query = 15 
-        self.task_num = 4 
         self.update_step = 5
         self.update_step_test = 5 
         self.temp = temp

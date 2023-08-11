@@ -10,7 +10,10 @@ import glob
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
-from meta import Meta
+from torch import nn
+import torch.nn.functional as F 
+from learner import Learner
+from copy import deepcopy
 
 class MiniImagenet(Dataset):
     """
@@ -174,6 +177,149 @@ class MiniImagenet(Dataset):
     def __len__(self):
         # as we have built up to batchsz of sets, you can sample some small batch size of sets.
         return self.batchsz
+    
+class Meta(nn.Module):
+    """
+    Meta-Learner
+    """
+    def __init__(self, config, opt_path=None):
+        super(Meta, self).__init__()   
+        self.update_lr = 0.1 ## learner \alpha
+        self.meta_lr = 1e-3 ## meta-learner \beta
+        self.update_step = 5
+        self.update_step_test = 5        
+        
+        self.net = Learner(config) ## base-learner
+        device = torch.device('cuda:0')
+        self.net.to(device)
+        
+        self.meta_optim = torch.optim.Adam(self.net.parameters(), lr = self.meta_lr)
+        self.opt_path = opt_path
+        self.meta_optim = torch.optim.Adam(self.net.parameters(), lr = self.meta_lr) 
+        if opt_path != None:
+            self.meta_optim.load_state_dict(torch.load(self.opt_path))
+        
+    def forward(self, x_support, y_support, x_query, y_query):
+        """
+        :param x_spt:   torch.Size([8, 5, 1, 28, 28])
+        :param y_spt:   torch.Size([8, 5])
+        :param x_qry:   torch.Size([8, 75, 1, 28, 28])
+        :param y_qry:   torch.Size([8, 75])
+        :return:
+        N-way-K-shot
+        """
+        task_num, ways, shots, h, w = x_support.size()
+        # print("Meta forward")
+        querysz = x_query.size(1)
+        losses_q = [0 for _ in range(self.update_step +1)] ## losses_q[i] is the loss on step i
+        corrects = [0 for _ in range(self.update_step +1)]
+        
+        for i in range(task_num):    
+
+            logits = self.net(x_support[i], vars=None, bn_training = True)
+            loss = F.cross_entropy(logits, y_support[i]) 
+            grad = torch.autograd.grad(loss, self.net.parameters()) 
+            tuples = zip(grad, self.net.parameters())
+            ## fast_weights
+            fast_weights = list( map(lambda p: p[1] - self.update_lr * p[0], tuples) )
+            
+            with torch.no_grad():
+                logits_q = self.net(x_query[i], self.net.parameters(), bn_training = True) 
+                loss_q = F.cross_entropy(logits_q, y_query[i])
+                losses_q[0] += loss_q 
+                pred_q = F.softmax(logits_q, dim = 1).argmax(dim=1) 
+                correct = torch.eq(pred_q, y_query[i]).sum().item()
+                corrects[0] += correct
+            
+            with torch.no_grad():
+                logits_q = self.net(x_query[i], fast_weights, bn_training = True)
+                loss_q = F.cross_entropy(logits_q, y_query[i])
+                losses_q[1] += loss_q
+                pred_q = F.softmax(logits_q, dim = 1).argmax(dim=1)
+                correct = torch.eq(pred_q, y_query[i]).sum().item()
+                corrects[1] += correct     
+            
+            for k in range(1, self.update_step):
+                logits = self.net(x_support[i], fast_weights, bn_training =True)
+                loss = F.cross_entropy(logits, y_support[i])
+                grad = torch.autograd.grad(loss, fast_weights)
+                tuples = zip(grad,fast_weights)
+                fast_weights = list(map(lambda p:p[1] - self.update_lr * p[0], tuples))
+                
+                if k < self.update_step - 1:
+                    with torch.no_grad():   
+                        logits_q = self.net(x_query[i], fast_weights, bn_training = True)
+                        loss_q = F.cross_entropy(logits_q, y_query[i])
+                        losses_q[k+1] += loss_q
+                        
+                else:
+                    logits_q = self.net(x_query[i], fast_weights, bn_training = True)
+                    loss_q = F.cross_entropy(logits_q, y_query[i])
+                    losses_q[k+1] += loss_q
+                
+                with torch.no_grad():
+                    pred_q = F.softmax(logits_q, dim=1).argmax(dim = 1)
+                    correct = torch.eq(pred_q, y_query[i]).sum().item()
+                    corrects[k+1] += correct
+                    
+        ## loss
+        loss_q = losses_q[-1] / task_num
+        self.meta_optim.zero_grad() 
+        loss_q.backward() 
+        self.meta_optim.step() 
+        
+        accs = np.array(corrects) / (querysz * task_num) 
+        
+        return accs
+        
+    
+    def finetunning(self, x_support, y_support, x_query, y_query):
+        assert len(x_support.shape) == 4
+        
+        querysz = x_query.size(0)
+        
+        corrects = [0 for _ in range(self.update_step_test + 1)]
+        
+        # in order to not ruin the state of running_mean/variance and bn_weight/bias
+        # we finetunning on the copied model instead of self.net
+        net = deepcopy(self.net)
+        
+        logits = net(x_support)
+        loss = F.cross_entropy(logits, y_support)
+        grad = torch.autograd.grad(loss, net.parameters())
+        fast_weights = list(map(lambda p: p[1] - self.update_lr * p[0], zip(grad, net.parameters())))
+        
+        with torch.no_grad():
+            logits_q = net(x_query, net.parameters(), bn_training = True)
+            pred_q = F.softmax(logits_q, dim =1).argmax(dim=1)
+            correct = torch.eq(pred_q, y_query).sum().item()
+            corrects[0] += correct
+
+        with torch.no_grad():
+            logits_q = net(x_query, fast_weights, bn_training = True)
+            pred_q = F.softmax(logits_q, dim = 1).argmax(dim=1)
+            correct = torch.eq(pred_q, y_query).sum().item()
+            corrects[1] += correct
+            
+        for k in range(1, self.update_step_test):
+            logits = net(x_support, fast_weights, bn_training=True)
+            loss = F.cross_entropy(logits, y_support)
+            grad = torch.autograd.grad(loss, fast_weights)
+            fast_weights = list(map(lambda p: p[1] - self.update_lr * p[0], zip(grad, fast_weights)))
+            
+            logits_q = net(x_query, fast_weights, bn_training=True)
+            loss_q = F.cross_entropy(logits_q, y_query)
+            
+            with torch.no_grad():
+                pred_q = F.softmax(logits_q, dim =1).argmax(dim=1)
+                correct = torch.eq(pred_q, y_query).sum().item()
+                corrects[k+1] += correct
+                
+        del net
+        
+        accs = np.array(corrects) / querysz
+        
+        return accs
 
 def main():
         
@@ -194,7 +340,7 @@ def main():
     parser.add_argument('-b_train', '--batchsz_train', type=int, default=10000, help='Train batch size')
     parser.add_argument('-b_test', '--batchsz_test', type=int, default=100, help='Train batch size')
     parser.add_argument('-sz', '--size', type=int, default=84, help='Image size')
-    parser.add_argument('-t', '--transfer', type=eval, default='True', help='If true, applies transfer learning, else regular MAML')
+    parser.add_argument('-t', '--transfer', type=eval, default='False', help='If true, applies transfer learning, else regular MAML')
     parser.add_argument('-r', '--seed', type=int, default=222, help='Random seed')
     
     # Parse the arguments
@@ -234,6 +380,7 @@ def main():
             maml = Meta(config, opt_path=opt_path).to(device)
             model_path = args.model_path + 'model_%sw_1s_1q.pth' %(args.n_way)
             maml.load_state_dict(torch.load(model_path))
+            print("Model loaded successfully!")
         except FileNotFoundError:
             print("File does not exist. Please save the file first by running the relevant unsupervised learning first.\n")
             raise          
